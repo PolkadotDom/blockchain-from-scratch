@@ -10,7 +10,7 @@ use std::collections::HashSet;
 /// circulation, and updates that set when money is transferred.
 pub struct DigitalCashSystem;
 
-/// A single bill in the digital cash system. Each bill has an owner who is allowed to spent
+/// A single bill in the digital cash system. Each bill has an owner who is allowed to spend
 /// it and an amount that it is worth. It also has serial number to ensure that each bill
 /// is unique.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -88,8 +88,29 @@ impl StateMachine for DigitalCashSystem {
 	type Transition = CashTransaction;
 
 	fn next_state(starting_state: &Self::State, t: &Self::Transition) -> Self::State {
-		todo!("Exercise 1")
+		let mut state = starting_state.clone();
+		let s = match t {
+			CashTransaction::Mint { minter, amount } => {
+				mint(state, minter, amount)		
+			},
+			CashTransaction::Transfer { spends, receives } => {
+				transfer(state, spends, receives)
+			}
+		};
+		s.clone()
 	}
+}
+
+//mint new bill
+fn mint(mut state: State, minter: &User, amount: &u64) -> State {
+	let b = Bill {owner: *minter, amount: *amount, serial: state.next_serial()};
+	state.add_bill(b);
+	state
+}
+
+//transfer a bill, setup needs more details, skipping
+fn transfer(mut state: State, spends: &Vec<Bill>, receives: &Vec<Bill>) -> State {
+	state
 }
 
 #[test]
