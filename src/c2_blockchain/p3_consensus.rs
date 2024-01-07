@@ -38,12 +38,30 @@ pub struct Header {
 impl Header {
 	/// Returns a new valid genesis header.
 	fn genesis() -> Self {
-		todo!("Exercise 1")
+		Header { 
+			parent: u64::MIN,
+			height: u64::MIN,
+			extrinsic: 0,
+			state: 0,
+			consensus_digest: 0
+		}
 	}
 
 	/// Create and return a valid child header.
 	fn child(&self, extrinsic: u64) -> Self {
-		todo!("Exercise 2")
+		//create
+		let mut h = Header { 
+			parent: hash(self),
+			height: self.height + 1,
+			extrinsic: extrinsic,
+			state: self.state + extrinsic,
+			consensus_digest: 0
+		};
+		//hash until under threshold
+		while hash(&h) > THRESHOLD {
+			h.consensus_digest += 1;
+		}
+		h
 	}
 
 	/// Verify that all the given headers form a valid chain from this header to the tip.
@@ -51,7 +69,18 @@ impl Header {
 	/// In addition to all the rules we had before, we now need to check that the block hash
 	/// is below a specific threshold.
 	fn verify_sub_chain(&self, chain: &[Header]) -> bool {
-		todo!("Exercise 3")
+		let mut parent = self;
+		for header in chain {
+			let condition = header.parent == hash(parent)
+				&& header.height == parent.height + 1
+				&& header.state == parent.state + header.extrinsic
+				&& hash(header) < THRESHOLD;
+			if !condition {
+				return false;
+			}
+			parent = header;
+		}
+		return true;
 	}
 
 	// After the blockchain ran for a while, a political rift formed in the community.
@@ -63,14 +92,65 @@ impl Header {
 	/// verify that the given headers form a valid chain.
 	/// In this case "valid" means that the STATE MUST BE EVEN.
 	fn verify_sub_chain_even(&self, chain: &[Header]) -> bool {
-		todo!("Exercise 4")
+		let mut parent = self;
+		for header in chain {
+			let condition = header.parent == hash(parent)
+				&& header.height == parent.height + 1
+				&& header.state == parent.state + header.extrinsic
+				&& (header.state % 2 == 0 || header.height <= FORK_HEIGHT)
+				&& hash(header) < THRESHOLD;
+			if !condition {
+				return false;
+			}
+			parent = header;
+		}
+		return true;
 	}
 
 	/// verify that the given headers form a valid chain.
 	/// In this case "valid" means that the STATE MUST BE ODD.
 	fn verify_sub_chain_odd(&self, chain: &[Header]) -> bool {
-		todo!("Exercise 5")
+		let mut parent = self;
+		for header in chain {
+			let condition = header.parent == hash(parent)
+				&& header.height == parent.height + 1
+				&& header.state == parent.state + header.extrinsic
+				&& (header.state % 2 == 1 || header.height <= FORK_HEIGHT)
+				&& hash(header) < THRESHOLD;
+			if !condition {
+				return false;
+			}
+			parent = header;
+		}
+		return true;
 	}
+}
+
+/// Build and return a valid chain with the given number of blocks.
+fn build_valid_chain(n: u64) -> Vec<Header> {
+	match n.try_into() {
+		Ok(size) => {
+			let mut headers = vec![Header::genesis(); size];
+			for i in 1..size {
+				headers[i] = headers[i-1].child(1);
+			}
+			headers
+		}
+		Err(e) => {
+			return Vec::new();
+		}
+	}
+}
+
+// Add fork to a chain, extrinsic following a given rule
+fn add_fork(pre: &Header, length: u64, extrinsic_by_state: impl Fn(u64) -> u64) -> Vec<Header> {
+	let mut fork: Vec<Header> = vec![pre.child(extrinsic_by_state(pre.state))];
+	for _ in 0..length-1 {
+		let last = &fork[fork.len()-1];
+		let next = last.child(extrinsic_by_state(last.state));
+		fork.push(next);
+	}
+	fork
 }
 
 /// Build and return two different chains with a common prefix.
@@ -90,7 +170,17 @@ impl Header {
 /// G -- 1 -- 2
 ///            \-- 3'-- 4'
 fn build_contentious_forked_chain() -> (Vec<Header>, Vec<Header>, Vec<Header>) {
-	todo!("Exercise 6")
+	let pre = build_valid_chain(2);
+	let last = pre.last().expect("Prefix was empty");
+	let even = add_fork(last, 3, |state| state); //<- mult by 2
+	let odd = add_fork(last, 3, |state| {
+		if state % 2 == 0 {
+			1 //<- even add 1
+		} else {
+			2 //<- odd add 2
+		}
+	});
+	(pre, even, odd)
 }
 
 // To run these tests: `cargo test bc_3`
