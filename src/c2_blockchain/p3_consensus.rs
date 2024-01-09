@@ -97,7 +97,7 @@ impl Header {
 			let condition = header.parent == hash(parent)
 				&& header.height == parent.height + 1
 				&& header.state == parent.state + header.extrinsic
-				&& (header.state % 2 == 0 || header.height <= FORK_HEIGHT)
+				&& (header.state & 1 == 0 || header.height <= FORK_HEIGHT)
 				&& hash(header) < THRESHOLD;
 			if !condition {
 				return false;
@@ -115,7 +115,7 @@ impl Header {
 			let condition = header.parent == hash(parent)
 				&& header.height == parent.height + 1
 				&& header.state == parent.state + header.extrinsic
-				&& (header.state % 2 == 1 || header.height <= FORK_HEIGHT)
+				&& (header.state & 1 == 1 || header.height <= FORK_HEIGHT)
 				&& hash(header) < THRESHOLD;
 			if !condition {
 				return false;
@@ -174,7 +174,7 @@ fn build_contentious_forked_chain() -> (Vec<Header>, Vec<Header>, Vec<Header>) {
 	let last = pre.last().expect("Prefix was empty");
 	let even = add_fork(last, 3, |state| state); //<- mult by 2
 	let odd = add_fork(last, 3, |state| {
-		if state % 2 == 0 {
+		if state & 1 == 0 {
 			1 //<- even add 1
 		} else {
 			2 //<- odd add 2
