@@ -4,6 +4,8 @@
 use crate::hash;
 type Hash = u64;
 
+const THRESHOLD: u64 = u64::max_value() / 100;
+
 /// The header no longer contains an extrinsic directly. Rather a vector of extrinsics will be
 /// stored in the block body. We are still storing the state in the header for now. This will change
 /// in an upcoming lesson as well.
@@ -41,13 +43,18 @@ impl Header {
 	/// Without the extrinsics themselves, we cannot calculate the final state
 	/// so that information is passed in.
 	pub fn child(&self, extrinsics_root: Hash, state: u64) -> Self {
-		Header {
+		let mut h = Header {
 			parent: hash(self),
 			height: self.height + 1,
 			extrinsics_root,
 			state,
 			consensus_digest: u64::MIN,
+		};
+		//hash until under threshold
+		while hash(&h) > THRESHOLD {
+			h.consensus_digest += 1;
 		}
+		h
 	}
 
 	/// Verify a single child header.
