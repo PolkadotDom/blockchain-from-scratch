@@ -28,6 +28,20 @@ pub struct Header<Digest> {
 	extrinsics_root: Hash,
 	consensus_digest: Digest,
 }
+
+impl Header<()> {
+	//convert a null header into one with a digest
+	fn convert_to_digest<T>(&self, digest: T) -> Header<T> {
+		Header::<T> {
+			parent: self.parent,
+			height: self.height,
+			state_root: self.state_root,
+			extrinsics_root: self.extrinsics_root,
+			consensus_digest: digest,
+		}
+	}
+}
+
 /// A Consensus Engine. Responsible for Sealing blocks and verifying their seals
 ///
 /// Consensus exists independently of execution logic, and therefore operates
