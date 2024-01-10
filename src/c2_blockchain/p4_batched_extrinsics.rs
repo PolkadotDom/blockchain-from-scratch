@@ -104,11 +104,11 @@ impl Block {
 	}
 
 	//execute the extrinsics on the state
-	fn execute_exts(mut prevState: u64, exts: &Vec<u64>) -> u64 {
+	fn execute_exts(mut prev_state: u64, exts: &Vec<u64>) -> u64 {
 		for ext in exts {
-			prevState += ext;
+			prev_state += ext;
 		}
-		prevState
+		prev_state
 	}
 
 	/// Create and return a valid child block.
