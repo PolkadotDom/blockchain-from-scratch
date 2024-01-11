@@ -130,3 +130,15 @@ pub enum ConsensusAuthority {
 	Bob,
 	Charlie,
 }
+
+impl ConsensusAuthority {
+	pub fn from_index(ind: &u64) -> Self {
+		let modInd = ind % 3;
+		match modInd {
+			0 => Self::Alice,
+			1 => Self::Bob,
+			2 => Self::Charlie,
+			_ => Self::Charlie,
+		}
+	}
+}
