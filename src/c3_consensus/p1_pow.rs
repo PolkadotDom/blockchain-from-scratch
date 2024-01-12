@@ -22,17 +22,15 @@ impl Consensus for PoW {
 	/// Check that the provided header's hash is below the required threshold.
 	/// This does not rely on the parent digest at all.
 	fn validate(&self, _: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		header.consensus_digest < self.threshold
+		hash(&header) < self.threshold
 	}
 
 	/// Mine a new PoW seal for the partial header provided.
 	/// This does not rely on the parent digest at all.
 	fn seal(&self, _: &Self::Digest, partial_header: Header<()>) -> Option<Header<Self::Digest>> {
 		let mut header: Header<Self::Digest> = partial_header.convert_to_digest(u64::MIN);
-		let mut hashed = hash(&header);
-		while hashed >= self.threshold {
+		while !self.validate(&u64::MIN, &header) {
 			header.consensus_digest += 1;
-			hashed = hash(&header);
 		}
 		Some(header)
 	}
