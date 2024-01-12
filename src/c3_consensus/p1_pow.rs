@@ -13,7 +13,7 @@ use crate::hash;
 /// implemented in the previous chapter. Here we simply re-implement it in the
 /// consensus framework that will be used throughout this chapter.
 pub struct PoW {
-	threshold: u64,
+	pub threshold: u64,
 }
 
 impl Consensus for PoW {
