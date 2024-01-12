@@ -133,8 +133,8 @@ pub enum ConsensusAuthority {
 
 impl ConsensusAuthority {
 	pub fn from_index(ind: &u64) -> Self {
-		let modInd = ind % 3;
-		match modInd {
+		let mod_ind = ind % 3;
+		match mod_ind {
 			0 => Self::Alice,
 			1 => Self::Bob,
 			2 => Self::Charlie,
