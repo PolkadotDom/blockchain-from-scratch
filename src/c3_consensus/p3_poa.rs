@@ -72,7 +72,7 @@ struct PoaRoundRobinBySlot {
 /// A digest used for PoaRoundRobinBySlot. The digest contains the slot number as well as the
 /// signature. In addition to checking that the right signer has signed for the slot, you must check
 /// that the slot is always strictly increasing. But remember that slots may be skipped.
-#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, Default)]
+#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy)]
 struct SlotDigest {
 	slot: u64,
 	signature: ConsensusAuthority,
