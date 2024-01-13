@@ -47,7 +47,7 @@ impl Header<()> {
 /// Consensus exists independently of execution logic, and therefore operates
 /// only on the block headers.
 pub trait Consensus {
-	type Digest: Clone + core::fmt::Debug + Eq + PartialEq + std::hash::Hash;
+	type Digest: Clone + core::fmt::Debug + Eq + PartialEq + std::hash::Hash + Default;
 
 	/// Validates that a header is valid according to consensus rules. This
 	/// function checks ONLY consensus-related aspects such as the signature
@@ -124,9 +124,9 @@ impl Consensus for () {
 
 /// A set of consensus authority accounts that can be used in
 /// identity-based consensus algorithms.
-#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ConsensusAuthority {
-	Alice,
+	#[default] Alice,
 	Bob,
 	Charlie,
 }
