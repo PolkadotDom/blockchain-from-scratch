@@ -11,7 +11,7 @@ use crate::hash;
 
 /// A Consensus engine that requires the state root to be even for the header to be valid.
 /// Wraps an inner consensus engine whose rules will also be enforced.
-struct EvenOnly<Inner: Consensus>(Inner);
+pub struct EvenOnly<Inner: Consensus>(pub Inner);
 
 impl<Inner: Consensus> Consensus for EvenOnly<Inner> {
 	type Digest = Inner::Digest;
