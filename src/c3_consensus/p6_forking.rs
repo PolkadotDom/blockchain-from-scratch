@@ -15,7 +15,8 @@ use super::{Consensus, ConsensusAuthority, Header};
 struct Forked<D, Before, After> {
 	/// The first block height at which the new consensus rules apply
 	fork_height: u64,
-	phdata: PhantomData<(D, Before, After)>,
+	digest: D,
+	engines: (Before, After),
 }
 
 impl<D, B, A> Consensus for Forked<D, B, A>
@@ -23,13 +24,37 @@ where
 	D: Clone + core::fmt::Debug + Eq + PartialEq + std::hash::Hash,
 	B: Consensus,
 	A: Consensus,
-	B::Digest: Into<D>,
-	A::Digest: Into<D>,
+	B::Digest: Into<D> + From<D>,
+	A::Digest: Into<D> + From<D>,
 {
 	type Digest = D;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		if header.height < self.fork_height {
+			//convert
+			let b_d_parent : B::Digest = parent_digest.clone().into();
+			let header_new: Header<B::Digest> = Header {
+				parent: header.parent,
+				height: header.height,
+				state_root: header.state_root,
+				extrinsics_root: header.extrinsics_root,
+				consensus_digest: header.consensus_digest.clone().into(),
+			};
+			//validate
+			self.engines.0.validate(&b_d_parent, &header_new)
+		} else {
+			//convert
+			let a_d_parent : A::Digest = parent_digest.clone().into();
+			let header_new: Header<A::Digest> = Header {
+				parent: header.parent,
+				height: header.height,
+				state_root: header.state_root,
+				extrinsics_root: header.extrinsics_root,
+				consensus_digest: header.consensus_digest.clone().into(),
+			};
+			//validate
+			self.engines.1.validate(&a_d_parent, &header_new)
+		}
 	}
 
 	fn seal(
