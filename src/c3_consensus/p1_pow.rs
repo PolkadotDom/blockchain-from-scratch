@@ -4,13 +4,17 @@
 //! This is the same logic we implemented previously. Here we re-implement it in the
 //! generic consensus framework that we will use throughout the rest of the chapter.
 
+use std::num::ParseIntError;
+
 use super::{Consensus, Header};
+use crate::hash;
 
 /// A Proof of Work consensus engine. This is the same consensus logic that we
 /// implemented in the previous chapter. Here we simply re-implement it in the
 /// consensus framework that will be used throughout this chapter.
+#[derive(Clone)]
 pub struct PoW {
-	threshold: u64,
+	pub threshold: u64,
 }
 
 impl Consensus for PoW {
@@ -19,13 +23,17 @@ impl Consensus for PoW {
 	/// Check that the provided header's hash is below the required threshold.
 	/// This does not rely on the parent digest at all.
 	fn validate(&self, _: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		hash(&header) < self.threshold
 	}
 
 	/// Mine a new PoW seal for the partial header provided.
 	/// This does not rely on the parent digest at all.
 	fn seal(&self, _: &Self::Digest, partial_header: Header<()>) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 2")
+		let mut header: Header<Self::Digest> = partial_header.convert_to_digest(u64::MIN);
+		while !self.validate(&u64::MIN, &header) {
+			header.consensus_digest += 1;
+		}
+		Some(header)
 	}
 }
 
@@ -33,5 +41,7 @@ impl Consensus for PoW {
 /// with randomly drawn nonces will be valid. That is: the threshold should be u64::max_value() /
 /// 100.
 pub fn moderate_difficulty_pow() -> impl Consensus {
-	todo!("Exercise 3")
+	PoW {
+		threshold: u64::max_value() / 100
+	}
 }

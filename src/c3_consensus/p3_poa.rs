@@ -13,15 +13,15 @@ use super::{Consensus, ConsensusAuthority, Header};
 
 /// A Proof of Authority consensus engine. If any of the authorities have signed the block, it is
 /// valid.
-struct SimplePoa {
-	authorities: Vec<ConsensusAuthority>,
+pub struct SimplePoa {
+	pub authorities: Vec<ConsensusAuthority>,
 }
 
 impl Consensus for SimplePoa {
 	type Digest = ConsensusAuthority;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 1")
+		self.authorities.contains(&header.consensus_digest)
 	}
 
 	fn seal(
@@ -29,7 +29,7 @@ impl Consensus for SimplePoa {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 2")
+		Some(partial_header.convert_to_digest(ConsensusAuthority::Alice))
 	}
 }
 
@@ -44,7 +44,7 @@ impl Consensus for PoaRoundRobinByHeight {
 	type Digest = ConsensusAuthority;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 3")
+		header.consensus_digest == ConsensusAuthority::from_index(&header.height) 
 	}
 
 	fn seal(
@@ -52,7 +52,7 @@ impl Consensus for PoaRoundRobinByHeight {
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 4")
+		Some(partial_header.convert_to_digest(ConsensusAuthority::from_index(&partial_header.height)))
 	}
 }
 
@@ -82,14 +82,22 @@ impl Consensus for PoaRoundRobinBySlot {
 	type Digest = SlotDigest;
 
 	fn validate(&self, parent_digest: &Self::Digest, header: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 5")
+		let slot_cond = header.consensus_digest.slot > parent_digest.slot;
+		let auth_cond = header.consensus_digest.signature == ConsensusAuthority::from_index(&header.consensus_digest.slot);
+		slot_cond && auth_cond
 	}
 
+	//<- feel I'm missing how to handle if the previous slot wasn't authored
 	fn seal(
 		&self,
 		parent_digest: &Self::Digest,
 		partial_header: Header<()>,
 	) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 6")
+		let slot = parent_digest.slot + 1;
+		let digest = SlotDigest {
+			slot: slot,
+			signature: ConsensusAuthority::from_index(&slot)
+		};
+		Some(partial_header.convert_to_digest(digest))
 	}
 }

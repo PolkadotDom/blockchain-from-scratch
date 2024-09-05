@@ -28,6 +28,20 @@ pub struct Header<Digest> {
 	extrinsics_root: Hash,
 	consensus_digest: Digest,
 }
+
+impl Header<()> {
+	//convert a null header into one with a digest
+	fn convert_to_digest<T>(&self, digest: T) -> Header<T> {
+		Header::<T> {
+			parent: self.parent,
+			height: self.height,
+			state_root: self.state_root,
+			extrinsics_root: self.extrinsics_root,
+			consensus_digest: digest,
+		}
+	}
+}
+
 /// A Consensus Engine. Responsible for Sealing blocks and verifying their seals
 ///
 /// Consensus exists independently of execution logic, and therefore operates
@@ -74,7 +88,14 @@ pub trait Consensus {
 		parent_digest: &Self::Digest,
 		chain: &[Header<Self::Digest>],
 	) -> bool {
-		todo!("Exercise 1")
+		let mut digest = parent_digest.clone();
+		for i in 0..chain.len() {
+			if !self.validate(&digest, &chain[i]) {
+				return false;
+			}
+			digest = chain[i].consensus_digest.clone();
+		}
+		true
 	}
 
 	/// A human-readable name for this engine. This may be used in user-facing
@@ -92,20 +113,32 @@ impl Consensus for () {
 
 	/// All blocks are considered valid
 	fn validate(&self, _: &Self::Digest, _: &Header<Self::Digest>) -> bool {
-		todo!("Exercise 2")
+		true
 	}
 
 	/// No real sealing is required. The partial header has all the necessary information
 	fn seal(&self, _: &Self::Digest, partial_header: Header<()>) -> Option<Header<Self::Digest>> {
-		todo!("Exercise 3")
+		Some(partial_header)
 	}
 }
 
 /// A set of consensus authority accounts that can be used in
 /// identity-based consensus algorithms.
-#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Hash, Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub enum ConsensusAuthority {
-	Alice,
+	#[default] Alice,
 	Bob,
 	Charlie,
+}
+
+impl ConsensusAuthority {
+	pub fn from_index(ind: &u64) -> Self {
+		let mod_ind = ind % 3;
+		match mod_ind {
+			0 => Self::Alice,
+			1 => Self::Bob,
+			2 => Self::Charlie,
+			_ => Self::Charlie,
+		}
+	}
 }

@@ -35,13 +35,63 @@ pub enum AccountingTransaction {
 	Transfer { sender: User, receiver: User, amount: u64 },
 }
 
+fn mint(mut balances: Balances, user: &User, amount: &u64) ->  Balances {
+	if *amount > 0 {
+		balances.entry(*user).and_modify(|e| {*e += amount}).or_insert(*amount);
+	}
+	balances
+}
+
+fn burn(mut balances: Balances, user: &User, amount: &u64) -> Balances
+{
+	if balances.contains_key(user) {
+		let balance = balances[user];
+		match balance.checked_sub(*amount) {
+			Some(0) => {
+				balances.remove(user);
+			}
+			Some(b) => {
+				balances.entry(*user).and_modify(|e| {*e = b});
+			},
+			None => {
+				balances.remove(user);
+			}
+		};
+		return balances;
+	} else {
+		balances
+	}
+}
+
+fn transfer(balances: Balances, sender: &User, receiver: &User, amount: &u64) -> Balances
+{
+	if balances.contains_key(sender) {
+		if balances[sender].checked_sub(*amount) == None {
+			return balances;
+		}
+		let mid_state = burn(balances, sender, amount);
+		return mint(mid_state, receiver, amount);
+	}
+	balances
+}
+
 /// We model this system as a state machine with three possible transitions
 impl StateMachine for AccountedCurrency {
 	type State = Balances;
 	type Transition = AccountingTransaction;
 
 	fn next_state(starting_state: &Balances, t: &AccountingTransaction) -> Balances {
-		todo!("Exercise 1")
+		match t {
+			AccountingTransaction::Mint { minter, amount } => {
+				mint(starting_state.clone(), minter, amount)
+			},
+			AccountingTransaction::Burn { burner, amount } => {
+				burn(starting_state.clone(), burner, amount)
+			},
+			AccountingTransaction::Transfer { sender, receiver, amount } => {
+				transfer(starting_state.clone(), sender, receiver, amount)
+			}
+		}
 	}
 }
 

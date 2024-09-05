@@ -35,12 +35,53 @@ pub enum ClothesAction {
 	Dry,
 }
 
+fn get_life_value(state: &ClothesState) -> Option<u64> {
+    match state {
+        ClothesState::Clean(life) => Some(*life),
+        ClothesState::Dirty(life) => Some(*life),
+        ClothesState::Wet(life) => Some(*life),
+        ClothesState::Tattered => None,
+    }
+}
+
 impl StateMachine for ClothesMachine {
 	type State = ClothesState;
 	type Transition = ClothesAction;
 
 	fn next_state(starting_state: &ClothesState, t: &ClothesAction) -> ClothesState {
-		todo!("Exercise 3")
+		if let Some(life) = get_life_value(&starting_state) {
+			let new_life = life-1;
+			if new_life < 1 {
+				return ClothesState::Tattered;
+			} else {
+				return match starting_state {
+					ClothesState::Tattered => ClothesState::Tattered,
+					ClothesState::Wet(_) => {
+						match t  {
+							ClothesAction::Wear => ClothesState::Dirty(new_life),
+							ClothesAction::Wash => ClothesState::Wet(new_life),
+							ClothesAction::Dry => ClothesState::Clean(new_life),
+						}
+					},
+					ClothesState::Dirty(_) => {
+						match t  {
+							ClothesAction::Wear => ClothesState::Dirty(new_life),
+							ClothesAction::Wash => ClothesState::Wet(new_life),
+							ClothesAction::Dry => ClothesState::Dirty(new_life),
+						}
+					},
+					ClothesState::Clean(_) => {
+						match t  {
+							ClothesAction::Wear => ClothesState::Dirty(new_life),
+							ClothesAction::Wash => ClothesState::Wet(new_life),
+							ClothesAction::Dry => ClothesState::Clean(new_life),
+						}
+					},
+				};
+			}
+		} else {
+			return ClothesState::Tattered;
+		}
 	}
 }
 
